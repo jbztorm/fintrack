@@ -1,4 +1,4 @@
-import { callLLM } from '@/lib/api/llm';
+import { callLLM } from '../api/llm';
 
 interface SummaryResult {
   summary: string;

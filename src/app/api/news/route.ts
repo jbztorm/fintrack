@@ -1,5 +1,5 @@
-import { db } from '@/lib/db';
-import { newsItems, companies, newsItemTags, tags, ingestionLogs } from '@/lib/db/schema';
+import { db } from '../../../lib/db';
+import { newsItems, companies, newsItemTags, tags, ingestionLogs } from '../../../lib/db/schema';
 import { eq, and, desc, gte, sql, asc } from 'drizzle-orm';
 
 export async function GET(request: Request) {

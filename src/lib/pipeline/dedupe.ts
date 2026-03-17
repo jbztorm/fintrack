@@ -1,8 +1,8 @@
-import { db } from '@/lib/db';
-import { newsItems } from '@/lib/db/schema';
+import { db } from '../db';
+import { newsItems } from '../db/schema';
 import { eq, and, gte, desc } from 'drizzle-orm';
 import { normalizeUrl, normalizeTitle, normalizeDomain, extractDomain } from './normalize';
-import { wordJaccardSimilarity } from '@/lib/utils/similarity';
+import { wordJaccardSimilarity } from '../utils/similarity';
 
 interface DedupeResult {
   action: 'skip' | 'group' | 'insert';

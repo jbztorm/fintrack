@@ -1,13 +1,13 @@
-import { db } from '@/lib/db';
-import { companies, newsItems, newsItemTags, ingestionLogs } from '@/lib/db/schema';
+import { db } from '../../../../lib/db';
+import { companies, newsItems, newsItemTags, ingestionLogs } from '../../../../lib/db/schema';
 import { eq } from 'drizzle-orm';
-import { fetchAllNews, filterCompanyNews } from '@/lib/api/rss';
-import { scrapeArticle } from '@/lib/api/scraper';
-import { checkDedupe } from '@/lib/pipeline/dedupe';
-import { applyRules } from '@/lib/pipeline/tagger';
-import { calculateScore } from '@/lib/pipeline/scorer';
-import { generateSummary } from '@/lib/pipeline/summarizer';
-import { normalizeUrl, normalizeTitle, normalizeDomain, extractDomain } from '@/lib/pipeline/normalize';
+import { fetchAllNews, filterCompanyNews } from '../../../../lib/api/rss';
+import { scrapeArticle } from '../../../../lib/api/scraper';
+import { checkDedupe } from '../../../../lib/pipeline/dedupe';
+import { applyRules } from '../../../../lib/pipeline/tagger';
+import { calculateScore } from '../../../../lib/pipeline/scorer';
+import { generateSummary } from '../../../../lib/pipeline/summarizer';
+import { normalizeUrl, normalizeTitle, normalizeDomain, extractDomain } from '../../../../lib/pipeline/normalize';
 
 export async function POST(request: Request) {
   const authHeader = request.headers.get('authorization');

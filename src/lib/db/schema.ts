@@ -4,7 +4,7 @@ import { relations } from 'drizzle-orm';
 // Enums
 export const sourceTypeEnum = pgEnum('source_type', ['news_api', 'rss', 'manual']);
 export const precisionEnum = pgEnum('published_at_precision', ['hour', 'day', 'month', 'unknown']);
-export const statusEnum = pgEnum('status', ['pending', 'ready', 'error']);
+export const statusEnum = pgEnum('status', ['pending', 'ready', 'error', 'running', 'completed']);
 export const fetchStatusEnum = pgEnum('fetch_status', ['pending', 'success', 'failed']);
 export const summaryTypeEnum = pgEnum('summary_type', ['llm', 'extractive', 'none']);
 export const tagSourceEnum = pgEnum('tag_source', ['rule', 'llm']);

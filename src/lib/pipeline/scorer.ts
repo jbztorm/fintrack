@@ -1,5 +1,5 @@
-import { db } from '@/lib/db';
-import { tags } from '@/lib/db/schema';
+import { db } from '../db';
+import { tags } from '../db/schema';
 import { eq, inArray } from 'drizzle-orm';
 
 const AUTHORITATIVE_DOMAINS = [

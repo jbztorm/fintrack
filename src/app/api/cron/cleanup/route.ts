@@ -1,5 +1,5 @@
-import { db } from '@/lib/db';
-import { newsItems, ingestionLogs } from '@/lib/db/schema';
+import { db } from '../../../../lib/db';
+import { newsItems, ingestionLogs } from '../../../../lib/db/schema';
 import { lt } from 'drizzle-orm';
 
 export async function POST(request: Request) {

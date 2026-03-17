@@ -1,5 +1,5 @@
-import { db } from '@/lib/db';
-import { newsItems, companies, tags, newsItemTags } from '@/lib/db/schema';
+import { db } from '../lib/db';
+import { newsItems, companies, tags, newsItemTags } from '../lib/db/schema';
 import { eq, desc, sql, and } from 'drizzle-orm';
 import Link from 'next/link';
 
@@ -92,7 +92,7 @@ export default async function HomePage({ searchParams }: { searchParams: { compa
                 {todayNews.map(item => (
                   <article key={item.id} className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-4">
                     <div className="flex items-center gap-2 mb-2 text-xs">
-                      {item.tags.slice(0, 2).map(tag => <span key={tag.id} className={`px-1.5 py-0.5 rounded ${tag.priority >= 2 ? 'bg-amber-500/20 text-amber-400' : 'bg-neutral-800'}`}>{tag.name}</span>)}
+                      {item.tags.slice(0, 2).map(tag => <span key={tag.id} className={`px-1.5 py-0.5 rounded ${(tag.priority ?? 0) >= 2 ? 'bg-amber-500/20 text-amber-400' : 'bg-neutral-800'}`}>{tag.name}</span>)}
                       <span className="text-neutral-500">{formatTimeAgo(item.publishedAt)}</span>
                       <span className="text-emerald-500">⭐ {item.impactScore}</span>
                     </div>
@@ -112,7 +112,7 @@ export default async function HomePage({ searchParams }: { searchParams: { compa
                   <div className="flex items-center gap-2 mb-2 text-xs">
                     {item.tags.slice(0, 2).map(tag => <span key={tag.id} className="px-1.5 py-0.5 rounded bg-neutral-800">{tag.name}</span>)}
                     <span className="text-neutral-500">{formatTimeAgo(item.publishedAt)}</span>
-                    <span className={parseFloat(item.impactScore) >= 7 ? 'text-emerald-400' : 'text-neutral-500'}>⭐ {item.impactScore}</span>
+                    <span className={parseFloat(item.impactScore ?? '0') >= 7 ? 'text-emerald-400' : 'text-neutral-500'}>⭐ {item.impactScore}</span>
                   </div>
                   <h3 className="font-medium text-neutral-300">{item.canonicalUrl ? <a href={item.canonicalUrl} target="_blank" className="hover:text-emerald-400">{item.title}</a> : item.title}</h3>
                   <div className="text-xs text-neutral-500 mt-2">{item.sourceName} • {item.companyName}</div>
