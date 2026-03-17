@@ -18,8 +18,6 @@
     "drizzle-orm": "^0.31.2",
     "@neondatabase/serverless": "^0.9.3",
     "cheerio": "^1.0.0-rc.12",
-    "openai": "^4.52.7",
-    "jaccard": "^2.1.1",
     "date-fns": "^3.6.0"
   },
   "devDependencies": {
