@@ -14,6 +14,18 @@ const RSS_SOURCES = [
   { name: 'TechCrunch', url: 'https://techcrunch.com/feed/', domain: 'techcrunch.com' },
   { name: 'The Verge', url: 'https://www.theverge.com/rss/index.xml', domain: 'theverge.com' },
   { name: 'Wired', url: 'https://www.wired.com/feed/rss', domain: 'wired.com' },
+  
+  // Financial News
+  { name: 'Financial Times', url: 'https://www.ft.com/rss/home', domain: 'ft.com' },
+  { name: 'Bloomberg', url: 'https://feeds.bloomberg.com/markets/news.rss', domain: 'bloomberg.com' },
+  { name: 'Reuters Business', url: 'https://www.reutersagency.com/feed/?taxonomy=best-topics&post_type=best', domain: 'reuters.com' },
+  
+  // Crypto
+  { name: 'CoinDesk', url: 'https://www.coindesk.com/feed/', domain: 'coindesk.com' },
+  
+  // Payments & FinTech
+  { name: 'PaymentsDive', url: 'https://www.paymentsdive.com/feed/', domain: 'paymentsdive.com' },
+  { name: 'TechInAsia', url: 'https://www.techinasia.com/feed', domain: 'techinasia.com' },
 ];
 
 // 目标公司关键词
