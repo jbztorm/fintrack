@@ -43,19 +43,26 @@ export async function POST(request: Request) {
       console.log('=== End of sample ===');
     }
     
-    // 2. 暂时不过滤，先全部导入测试
-    const companyNews = allNews;
-    console.log(`Processing all ${companyNews.length} items (filter disabled for test)`);
+    // 2. 过滤与目标公司相关的新闻
+    const companyNews = filterCompanyNews(allNews);
+    console.log(`Filtered to ${companyNews.length} company-related items`);
     
     let itemsNew = 0;
     let itemsError = 0;
     
-    // 处理每条新闻 (最多 20 条，先测试)
-    for (const article of companyNews.slice(0, 20)) {
+    // 处理每条新闻 (最多 10 条)
+    for (const article of companyNews.slice(0, 10)) {
       try {
-        // 暂时跳过公司匹配，全部导入
-        const company = allCompanies[Math.floor(Math.random() * allCompanies.length)];
-        if (!company) continue;
+        // 匹配公司
+        const company = allCompanies.find(c => {
+          const text = `${article.title} ${article.description}`.toLowerCase();
+          return c.searchQueries?.some(q => text.includes(q.toLowerCase()));
+        });
+        
+        if (!company) {
+          console.log(`No company match: ${article.title.slice(0, 30)}`);
+          continue;
+        }
         
         console.log(`Processing: ${article.title.slice(0, 40)}...`);
         
