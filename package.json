@@ -15,8 +15,9 @@
     "next": "14.2.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "@vercel/postgres": "^6.1.1",
     "drizzle-orm": "^0.31.2",
-    "@neondatabase/serverless": "^0.9.3",
+    "drizzle-orm-vercel-postgres": "^0.31.2",
     "cheerio": "^1.0.0-rc.12",
     "date-fns": "^3.6.0"
   },
