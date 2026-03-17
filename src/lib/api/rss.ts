@@ -10,15 +10,10 @@ interface RSSItem {
 }
 
 const RSS_SOURCES = [
-  // Tech
+  // Tech (测试通过)
   { name: 'TechCrunch', url: 'https://techcrunch.com/feed/', domain: 'techcrunch.com' },
   { name: 'The Verge', url: 'https://www.theverge.com/rss/index.xml', domain: 'theverge.com' },
   { name: 'Wired', url: 'https://www.wired.com/feed/rss', domain: 'wired.com' },
-  // 中文
-  { name: '36kr', url: 'https://www.36kr.com/feed/', domain: '36kr.com' },
-  { name: '虎嗅', url: 'https://www.huxiu.com/rss', domain: 'huxiu.com' },
-  // 金融
-  { name: 'Reuters', url: 'https://www.reutersagency.com/feed/', domain: 'reuters.com' },
 ];
 
 // 目标公司关键词
