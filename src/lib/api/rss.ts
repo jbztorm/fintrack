@@ -27,39 +27,35 @@ const COMPANY_KEYWORDS = [
   'PingPong', 'LianLian', 'WorldFirst', '连连支付', '蚂蚁集团'
 ];
 
+// 使用 rss2json API 抓取 RSS
 async function fetchRSS(url: string, sourceName: string, domain: string): Promise<RSSItem[]> {
   try {
-    const response = await fetch(url, {
+    const rss2jsonUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`;
+    
+    const response = await fetch(rss2jsonUrl, {
       headers: { 'User-Agent': 'FinTrack/1.0' },
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(15000),
     });
     
     if (!response.ok) return [];
     
-    const xml = await response.text();
-    const $ = cheerio.load(xml, { xmlMode: true });
+    const data = await response.json();
     
-    const items: RSSItem[] = [];
+    if (data.status !== 'ok' || !data.items) {
+      console.warn(`rss2json error for ${sourceName}: ${data.message || 'unknown error'}`);
+      return [];
+    }
     
-    $('item').each((_, el) => {
-      const title = $(el).find('title').text() || $(el).find('title').text();
-      const link = $(el).find('link').first().text();
-      const description = $(el).find('description').text() || $(el).find('content\\:encoded').text();
-      const pubDate = $(el).find('pubDate').text() || $(el).find('dc\\:date').text();
-      
-      if (title && link) {
-        items.push({
-          title: title.trim(),
-          link: link.trim(),
-          description: description?.slice(0, 500) || '',
-          pubDate: pubDate || new Date().toISOString(),
-          source: sourceName,
-          sourceDomain: domain,
-        });
-      }
-    });
+    const items: RSSItem[] = data.items.map((item: any) => ({
+      title: item.title || '',
+      link: item.link || '',
+      description: item.description?.replace(/<[^>]*>/g, '').slice(0, 500) || '',
+      pubDate: item.pubDate || new Date().toISOString(),
+      source: sourceName,
+      sourceDomain: domain,
+    }));
     
-    return items;
+    return items.filter((item: RSSItem) => item.title && item.link);
   } catch (error) {
     console.error(`RSS fetch error for ${sourceName}:`, error);
     return [];
@@ -68,41 +64,38 @@ async function fetchRSS(url: string, sourceName: string, domain: string): Promis
 
 async function fetchGoogleRSS(query: string): Promise<RSSItem[]> {
   try {
-    const url = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en-US&gl=US&ceid=US:en`;
-    const response = await fetch(url, {
+    const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en-US&gl=US&ceid=US:en`;
+    const rss2jsonUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+    
+    const response = await fetch(rss2jsonUrl, {
       headers: { 'User-Agent': 'FinTrack/1.0' },
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(15000),
     });
     
     if (!response.ok) return [];
     
-    const xml = await response.text();
-    const $ = cheerio.load(xml, { xmlMode: true });
+    const data = await response.json();
     
-    const items: RSSItem[] = [];
+    if (data.status !== 'ok' || !data.items) {
+      console.warn(`rss2json Google RSS error for ${query}: ${data.message || 'unknown error'}`);
+      return [];
+    }
     
-    $('item').each((_, el) => {
-      const title = $(el).find('title').text();
-      const link = $(el).find('link').text();
-      const description = $(el).find('description').text();
-      const pubDate = $(el).find('pubDate').text();
+    const items: RSSItem[] = data.items.map((item: any) => {
+      // 从 Google RSS link 中提取原始URL
+      const link = item.link?.replace('https://news.google.com/rss/articles/', '').split('?')[0] || item.link;
       
-      if (title && link) {
-        // 从 Google RSS link 中提取原始URL
-        const originalUrl = link.replace('https://news.google.com/rss/articles/', '').split('?')[0];
-        
-        items.push({
-          title: title.trim(),
-          link: originalUrl || link,
-          description: description?.slice(0, 500) || '',
-          pubDate: pubDate || new Date().toISOString(),
-          source: 'Google News',
-          sourceDomain: new URL(link).hostname || 'news.google.com',
-        });
-      }
+      return {
+        title: item.title || '',
+        link: link || '',
+        description: item.description?.replace(/<[^>]*>/g, '').slice(0, 500) || '',
+        pubDate: item.pubDate || new Date().toISOString(),
+        source: 'Google News',
+        sourceDomain: 'news.google.com',
+      };
     });
     
-    return items;
+    return items.filter((item: RSSItem) => item.title && item.link);
   } catch (error) {
     console.error(`Google RSS fetch error for ${query}:`, error);
     return [];
