@@ -16,12 +16,13 @@ export async function POST(request: Request) {
   }
   
   try {
-    console.log('Starting RSS ingestion...');
+    console.log('=== Starting RSS ingestion ===');
     
     // 获取所有活跃公司
     const allCompanies = await db.query.companies.findMany({
       where: eq(companies.isActive, true),
     });
+    console.log('Active companies:', allCompanies.map(c => c.name));
     
     // 创建 ingestion log
     const [log] = await db.insert(ingestionLogs).values({
@@ -29,8 +30,14 @@ export async function POST(request: Request) {
     }).returning();
     
     // 1. 抓取所有 RSS 新闻
+    console.log('Fetching RSS feeds...');
     const allNews = await fetchAllNews();
-    console.log(`Found ${allNews.length} total news items`);
+    console.log(`Total RSS items fetched: ${allNews.length}`);
+    
+    // 打印前3条看看
+    if (allNews.length > 0) {
+      console.log('Sample news:', allNews.slice(0, 3).map(n => ({ title: n.title.slice(0, 50), source: n.source })));
+    }
     
     // 2. 过滤与目标公司相关的
     const companyNews = filterCompanyNews(allNews);
@@ -39,8 +46,8 @@ export async function POST(request: Request) {
     let itemsNew = 0;
     let itemsError = 0;
     
-    // 处理每条新闻 (最多 20 条)
-    for (const article of companyNews.slice(0, 20)) {
+    // 处理每条新闻 (最多 10 条)
+    for (const article of companyNews.slice(0, 10)) {
       try {
         // 匹配公司
         const company = allCompanies.find(c => {
@@ -48,7 +55,12 @@ export async function POST(request: Request) {
           return c.searchQueries?.some(q => text.includes(q.toLowerCase()));
         });
         
-        if (!company) continue;
+        if (!company) {
+          console.log(`No company match for: ${article.title.slice(0, 30)}`);
+          continue;
+        }
+        
+        console.log(`Processing: ${article.title.slice(0, 40)}...`);
         
         // 抓取正文
         const scraped = await scrapeArticle(article.link);
@@ -61,7 +73,10 @@ export async function POST(request: Request) {
           publishedAt: article.pubDate ? new Date(article.pubDate) : undefined,
         });
         
-        if (dedupe.action === 'skip') continue;
+        if (dedupe.action === 'skip') {
+          console.log(`Skipped duplicate: ${article.title.slice(0, 30)}`);
+          continue;
+        }
         
         // 标签
         const tagIds = await applyRules(article.title, scraped.content);
@@ -114,6 +129,7 @@ export async function POST(request: Request) {
         }
         
         itemsNew++;
+        console.log(`✓ Added: ${article.title.slice(0, 40)}`);
       } catch (error) {
         console.error(`Error processing:`, error);
         itemsError++;
@@ -129,7 +145,7 @@ export async function POST(request: Request) {
       status: itemsError > 0 ? 'error' : 'completed',
     }).where(eq(ingestionLogs.id, log.id));
     
-    console.log(`Ingestion complete: ${itemsNew} new, ${itemsError} errors`);
+    console.log(`=== Ingestion complete: ${itemsNew} new, ${itemsError} errors ===`);
     
     return Response.json({ success: true, itemsNew, itemsError });
   } catch (error) {
