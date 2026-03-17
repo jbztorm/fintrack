@@ -11,6 +11,19 @@ const COMPANY_DATA = [
   { name: 'WorldFirst', slug: 'worldfirst', searchQueries: ['WorldFirst', 'WorldFirst Alipay', 'Antom'], isActive: true },
 ];
 
+const RSS_SOURCES = [
+  // Tech
+  { name: 'TechCrunch', url: 'https://techcrunch.com/feed/', domain: 'techcrunch.com' },
+  { name: 'The Verge', url: 'https://www.theverge.com/rss/index.xml', domain: 'theverge.com' },
+  { name: 'Wired', url: 'https://www.wired.com/feed/rss', domain: 'wired.com' },
+  // 中文
+  { name: '36kr', url: 'https://www.36kr.com/feed/', domain: '36kr.com' },
+  { name: '虎嗅', url: 'https://www.huxiu.com/rss', domain: 'huxiu.com' },
+  // 金融
+  { name: 'Reuters', url: 'https://www.reutersagency.com/feed/', domain: 'reuters.com' },
+  { name: 'Bloomberg', url: 'https://feeds.bloomberg.com/markets/news.rss', domain: 'bloomberg.com' },
+];
+
 const TAG_DATA = [
   { name: '产品发布', slug: 'product', category: 'product' as const, priority: 2 },
   { name: '公司动态', slug: 'company', category: 'dynamic' as const, priority: 1 },
@@ -38,6 +51,7 @@ async function seed() {
   }
 
   console.log('Seeding complete!');
+  console.log('RSS Sources:', RSS_SOURCES.map(s => s.name).join(', '));
 }
 
 seed().catch(console.error);
