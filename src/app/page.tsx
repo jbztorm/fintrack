@@ -2,6 +2,7 @@ import { db } from '../lib/db';
 import { newsItems, companies, tags, newsItemTags } from '../lib/db/schema';
 import { eq, desc, sql, and } from 'drizzle-orm';
 import Link from 'next/link';
+import { Suspense } from 'react';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,41 +21,95 @@ function isToday(date: Date | null): boolean {
   return date.toDateString() === new Date().toDateString();
 }
 
+// 安全的数据获取函数，带错误处理
+async function getNewsData(companyId?: string, tagId?: string, minScore: number = 0) {
+  try {
+    const conditions = [eq(newsItems.status, 'ready')];
+    if (companyId) conditions.push(eq(newsItems.companyId, companyId));
+    if (minScore > 0) conditions.push(sql`${newsItems.impactScore}::numeric >= ${minScore}`);
+    
+    const news = await db.select({
+      id: newsItems.id,
+      title: newsItems.title,
+      summary: newsItems.summary,
+      impactScore: newsItems.impactScore,
+      publishedAt: newsItems.publishedAt,
+      sourceName: newsItems.sourceName,
+      canonicalUrl: newsItems.canonicalUrl,
+      companyName: companies.name,
+    })
+    .from(newsItems)
+    .leftJoin(companies, eq(newsItems.companyId, companies.id))
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(desc(newsItems.publishedAt))
+    .limit(100);
+    
+    const newsWithTags = await Promise.all(news.map(async (item) => {
+      const itemTags = await db.select({ id: tags.id, name: tags.name, slug: tags.slug, priority: tags.priority })
+        .from(newsItemTags).leftJoin(tags, eq(newsItemTags.tagId, tags.id))
+        .where(eq(newsItemTags.newsItemId, item.id));
+      return { ...item, tags: itemTags };
+    }));
+    
+    return { news: newsWithTags, error: null };
+  } catch (error) {
+    console.error('Failed to fetch news:', error);
+    return { news: [], error: error instanceof Error ? error.message : 'Failed to fetch news data' };
+  }
+}
+
+async function getFilterOptions() {
+  try {
+    const allCompanies = await db.query.companies.findMany({ where: eq(companies.isActive, true) });
+    const allTags = await db.query.tags.findMany();
+    return { companies: allCompanies, tags: allTags, error: null };
+  } catch (error) {
+    console.error('Failed to fetch filter options:', error);
+    return { companies: [], tags: [], error: error instanceof Error ? error.message : 'Failed to fetch filters' };
+  }
+}
+
 export default async function HomePage({ searchParams }: { searchParams: { company?: string; tag?: string; minScore?: string } }) {
   const companyId = searchParams.company;
   const tagId = searchParams.tag;
   const minScore = parseFloat(searchParams.minScore || '0');
   
-  const conditions = [eq(newsItems.status, 'ready')];
-  if (companyId) conditions.push(eq(newsItems.companyId, companyId));
-  if (minScore > 0) conditions.push(sql`${newsItems.impactScore}::numeric >= ${minScore}`);
+  // 并行获取数据，带错误处理
+  const [newsData, filterOptions] = await Promise.all([
+    getNewsData(companyId, tagId, minScore),
+    getFilterOptions()
+  ]);
   
-  const news = await db.select({
-    id: newsItems.id,
-    title: newsItems.title,
-    summary: newsItems.summary,
-    impactScore: newsItems.impactScore,
-    publishedAt: newsItems.publishedAt,
-    sourceName: newsItems.sourceName,
-    canonicalUrl: newsItems.canonicalUrl,
-    companyName: companies.name,
-  })
-  .from(newsItems)
-  .leftJoin(companies, eq(newsItems.companyId, companies.id))
-  .where(conditions.length > 0 ? and(...conditions) : undefined)
-  .orderBy(desc(newsItems.publishedAt))
-  .limit(100);
+  // 如果有错误，显示友好信息
+  if (newsData.error || filterOptions.error) {
+    return (
+      <div className="min-h-screen">
+        <header className="border-b border-neutral-800 bg-neutral-900/50 backdrop-blur sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            <Link href="/" className="text-xl font-bold"><span className="text-emerald-500">◆</span> FinTrack</Link>
+            <div className="text-sm text-neutral-500">跨境支付情报看板</div>
+          </div>
+        </header>
+        <div className="max-w-7xl mx-auto px-4 py-12 text-center">
+          <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-8 max-w-md mx-auto">
+            <div className="text-amber-500 text-4xl mb-4">⚠️</div>
+            <h2 className="text-xl font-semibold mb-2">服务暂时不可用</h2>
+            <p className="text-neutral-400 mb-4">
+              {newsData.error || filterOptions.error || '数据库连接失败'}
+            </p>
+            <p className="text-sm text-neutral-500">
+              请稍后刷新页面，或联系管理员检查数据库配置
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
   
-  const newsWithTags = await Promise.all(news.map(async (item) => {
-    const itemTags = await db.select({ id: tags.id, name: tags.name, slug: tags.slug, priority: tags.priority })
-      .from(newsItemTags).leftJoin(tags, eq(newsItemTags.tagId, tags.id))
-      .where(eq(newsItemTags.newsItemId, item.id));
-    return { ...item, tags: itemTags };
-  }));
+  const { news: newsWithTags } = newsData;
+  const { companies: allCompanies, tags: allTags } = filterOptions;
   
   const filteredNews = tagId ? newsWithTags.filter(n => n.tags.some(t => t.id === tagId)) : newsWithTags;
-  const allCompanies = await db.query.companies.findMany({ where: eq(companies.isActive, true) });
-  const allTags = await db.query.tags.findMany();
   
   const todayNews = filteredNews.filter(n => isToday(n.publishedAt));
   const olderNews = filteredNews.filter(n => !isToday(n.publishedAt));
